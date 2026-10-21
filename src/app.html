@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0f3d24">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flag Plays">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Fast play-calling reference for flag football: filter, call, log how it went, and mark up plays with Apple Pencil.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Flag Plays</title>
+<style>
+:root{
+  --bg:#f3f4f0; --card:#fff; --ink:#14201a; --mute:#55655b; --line:#d5dad3; --soft:#e9ece6;
+  --brand:#0f3d24; --brand-ink:#fff; --accent:#17894a;
+  --fav:#ffe45c; --run:#ff9ec8; --bunch:#ffb066;
+  --good:#17894a; --mid:#c77d00; --bad:#c8362b;
+  --short:#0e9a5a; --mids:#d1242a; --long:#1565d8; --goal:#7b2fa8; --trick:#e87d00;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#0e1411; --card:#18211c; --ink:#eef3ef; --mute:#9bb0a4; --line:#2b3a31; --soft:#22302a; --brand:#0a2a19; --accent:#35b86e; }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:17px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overscroll-behavior:none}
+button,input,textarea,select{font:inherit;color:inherit}
+button{touch-action:manipulation;cursor:pointer;border:0;background:none;padding:0}
+#app{height:100%;display:flex;flex-direction:column;overflow:hidden}
+[hidden]{display:none!important}
+
+/* ---- top bar / browse ---- */
+.top{background:var(--brand);color:var(--brand-ink);padding:calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 12px) 8px calc(env(safe-area-inset-left) + 12px);flex:none}
+.row{display:flex;gap:8px;align-items:center}
+.row+.row{margin-top:8px}
+.top h1{font-size:20px;margin:0;flex:1;letter-spacing:.2px}
+.tab{min-height:44px;padding:0 16px;border-radius:12px;background:rgba(255,255,255,.12);font-weight:600;color:#fff}
+.tab.on{background:#fff;color:var(--brand)}
+.chip-game{min-height:44px;max-width:38vw;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.ib.wide{padding:0 14px;font-size:17px}
+.ib{min-width:48px;min-height:48px;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;font-size:20px;font-weight:600}
+.search{flex:1;min-height:48px;border-radius:12px;border:0;padding:0 14px;font-size:17px;background:#fff;color:#111}
+.filters{padding:10px calc(env(safe-area-inset-right) + 12px) 6px calc(env(safe-area-inset-left) + 12px);background:var(--bg);border-bottom:1px solid var(--line);flex:none}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pills+.pills{margin-top:8px}
+.pill{min-height:48px;padding:0 16px;border-radius:24px;background:var(--card);border:2px solid var(--line);font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.pill small{font-weight:500;color:var(--mute)}
+.pill.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pill.on small{color:inherit;opacity:.75}
+.pill.cat.on{background:var(--c);border-color:var(--c);color:#fff}
+.pill.t-fav.on{background:var(--fav);border-color:#c9a800;color:#222}
+.pill.t-run.on{background:var(--run);border-color:#d9588f;color:#222}
+.pill.t-bunch.on{background:var(--bunch);border-color:#d27a1e;color:#222}
+.pill.ghost{background:transparent;border-style:dashed;color:var(--mute)}
+.scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 12px)}
+.grp{display:flex;align-items:baseline;gap:8px;margin:16px 0 8px;font-size:22px;color:var(--c);border-bottom:3px solid var(--c);padding-bottom:2px}
+.grp small{color:var(--mute);font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+.card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px 10px;border-radius:16px;background:var(--card);border:1px solid var(--line);text-align:center;min-height:132px;position:relative}
+.card:active{transform:scale(.97)}
+.num{width:60px;height:60px;border-radius:50%;border:3px solid var(--ink);display:grid;place-items:center;font-size:26px;font-weight:800;color:#111;background:var(--card)}
+.card .nm{font-size:15px;font-weight:600;line-height:1.15}
+.card .meta{display:flex;gap:4px;align-items:center;min-height:16px;font-size:12px;color:var(--mute)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--mute)}
+.dot.g{background:var(--good)}.dot.m{background:var(--mid)}.dot.b{background:var(--bad)}
+.mark{position:absolute;top:6px;right:10px;font-weight:800;color:var(--bad);font-size:18px}
+.empty{padding:40px 12px;text-align:center;color:var(--mute)}
+.empty .pill{margin-top:12px}
+
+/* ---- play view ---- */
+.pv{display:flex;flex-direction:column;height:100%}
+.pbar{display:flex;align-items:center;gap:8px;background:var(--brand);color:#fff;padding:calc(env(safe-area-inset-top) + 6px) calc(env(safe-area-inset-right) + 10px) 6px calc(env(safe-area-inset-left) + 10px);flex:none}
+.pbar .pt{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.pbar .num{width:46px;height:46px;font-size:21px;flex:none}
+.pname{font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav{display:flex;align-items:center;gap:6px;font-size:14px}
+.nav .ib{min-width:52px}
+.pbody{flex:1;min-height:0;display:flex;flex-direction:column}
+.stage{flex:1;min-height:0;position:relative;display:grid;place-items:center;background:var(--soft);touch-action:none;overflow:hidden}
+.box{position:relative;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18)}
+.box img{display:block;width:100%;height:100%;-webkit-user-drag:none;user-select:none;-webkit-touch-callout:none}
+.box canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;pointer-events:none}
+.drawing .box canvas{pointer-events:auto}
+.tools{position:absolute;left:8px;right:8px;top:8px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;pointer-events:none}
+.tools>*{pointer-events:auto}
+.tgrp{display:flex;gap:4px;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.tb{min-width:46px;min-height:46px;border-radius:10px;padding:0 10px;font-weight:700;display:grid;place-items:center}
+.tb.on{background:var(--ink);color:var(--bg)}
+.sw{width:46px;height:46px;border-radius:10px;display:grid;place-items:center}
+.sw i{width:26px;height:26px;border-radius:50%;border:2px solid rgba(0,0,0,.25);display:block}
+.sw.on{background:var(--soft);outline:3px solid var(--ink)}
+.layer-badge{position:absolute;left:10px;bottom:10px;padding:4px 10px;border-radius:12px;background:rgba(0,0,0,.65);color:#fff;font-size:13px;font-weight:600;border:0}
+.panel{flex:none;max-height:52%;overflow:auto;background:var(--card);border-top:1px solid var(--line);padding:10px calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 12px) calc(env(safe-area-inset-left) + 12px)}
+.call{width:100%;min-height:68px;border-radius:18px;background:var(--accent);color:#fff;font-size:26px;font-weight:800;letter-spacing:.5px}
+.call:active{filter:brightness(.9)}
+.pstats{margin:8px 0;color:var(--mute);font-size:15px}
+.pstats b{color:var(--ink)}
+.prow{display:flex;gap:8px;flex-wrap:wrap}
+.btn{min-height:52px;padding:0 16px;border-radius:14px;background:var(--soft);font-weight:700;border:2px solid var(--line)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--bad)}
+.last{margin:6px 0 0;font-size:15px;color:var(--mute);font-style:italic}
+.ptop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.ptop h3{margin:0;font-size:19px}
+.lab{margin:10px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--mute);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.rc{min-height:50px;padding:0 14px;border-radius:14px;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:16px}
+.rc.good.on{background:var(--good);border-color:var(--good);color:#fff}
+.rc.mid.on{background:var(--mid);border-color:var(--mid);color:#fff}
+.rc.bad.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.rc.plain.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.rc.good{border-color:color-mix(in srgb,var(--good) 55%,var(--line))}
+.rc.mid{border-color:color-mix(in srgb,var(--mid) 55%,var(--line))}
+.rc.bad{border-color:color-mix(in srgb,var(--bad) 55%,var(--line))}
+.noteRow{display:flex;gap:8px;align-items:stretch}
+.note{flex:1;min-height:64px;border-radius:12px;border:2px solid var(--line);background:var(--bg);padding:8px 10px;resize:none;font-size:17px}
+.mic{width:64px;border-radius:12px;background:var(--soft);font-size:26px;border:2px solid var(--line)}
+.mic.on{background:var(--bad);color:#fff}
+
+/* ---- sheets / toast ---- */
+.veil{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:640px;max-height:88%;overflow:auto;background:var(--card);border-radius:22px 22px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 18px)}
+.sheet h3{margin:0 0 10px;font-size:20px}
+.sheet .x{float:right}
+.field{width:100%;min-height:50px;border-radius:12px;border:2px solid var(--line);background:var(--bg);padding:0 12px;font-size:17px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.pad button{min-height:68px;border-radius:16px;background:var(--soft);font-size:28px;font-weight:700;border:2px solid var(--line)}
+.padout{min-height:78px;border-radius:16px;background:var(--bg);border:2px solid var(--line);padding:8px 14px;display:flex;align-items:center;gap:12px;font-size:36px;font-weight:800}
+.padout span{font-size:18px;font-weight:600;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hrow{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);text-align:left;width:100%;align-items:flex-start}
+.hrow .num{width:44px;height:44px;font-size:18px;flex:none}
+.hrow .b{flex:1;min-width:0}
+.hrow .t{font-weight:700}
+.hrow .s{font-size:14px;color:var(--mute)}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:13px;font-weight:700;margin:2px 4px 0 0;color:#fff}
+.tag.good{background:var(--good)}.tag.mid{background:var(--mid)}.tag.bad{background:var(--bad)}.tag.plain{background:var(--mute)}
+.sum{display:flex;gap:16px;padding:12px 0;font-size:18px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 24px);z-index:40;background:#14201a;color:#fff;padding:12px 18px;border-radius:16px;display:flex;gap:14px;align-items:center;box-shadow:0 4px 18px rgba(0,0,0,.35);max-width:92vw}
+.toast button{color:#ffe45c;font-weight:800;min-height:36px}
+.sect{margin:18px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--mute);font-weight:700}
+@media (orientation:landscape) and (min-width:760px){
+  .pbody{flex-direction:row}
+  .panel{width:370px;max-height:none;border-top:0;border-left:1px solid var(--line)}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const VERSION = {{VERSION}};
+const PLAYS = {{PLAYS}};
+const IMG_W = 948, IMG_H = 1226;
+
+const CATS = [
+  { k: 'short', t: 'Short field',  c: 'var(--short)' },
+  { k: 'mid',   t: 'Intermediate', c: 'var(--mids)' },
+  { k: 'long',  t: 'Long yardage', c: 'var(--long)' },
+  { k: 'goal',  t: 'Goal line',    c: 'var(--goal)' },
+  { k: 'trick', t: 'Trick plays',  c: 'var(--trick)' },
+];
+const TAGS = [{ k: 'fav', t: '★ Favourite' }, { k: 'run', t: 'Run' }, { k: 'bunch', t: 'Bunch' }];
+const TAGCOL = { fav: 'var(--fav)', run: 'var(--run)', bunch: 'var(--bunch)' };
+const CONCEPTS = [['Motion', /motion|jet/i], ['Twins', /twins/i], ['Trips', /trips/i], ['Bunch', /bunch/i], ['Stack', /stack/i],
+  ['Toss / pitch', /toss|pitch|shovel/i], ['Boot / PA', /boot|\bpa\b|sprint/i], ['Mesh', /mesh/i], ['Wheel', /wheel/i],
+  ['Post / dig', /post|dig/i], ['Option', /option/i], ['Scissors', /scissors/i], ['Spacing', /spacing/i]];
+const RES = [
+  { k: 'worked',  t: 'Worked as planned',      g: 'good' },
+  { k: 'first',   t: 'First down',             g: 'good' },
+  { k: 'td',      t: 'Touchdown',              g: 'good' },
+  { k: 'big',     t: 'Big gain',               g: 'good' },
+  { k: 'rush',    t: 'Open – rush got there',  g: 'mid' },
+  { k: 'badthrow',t: 'Open – bad throw',       g: 'mid' },
+  { k: 'drop',    t: 'Dropped',                g: 'mid' },
+  { k: 'pen',     t: 'Penalty',                g: 'mid' },
+  { k: 'covered', t: 'Covered / nobody open',  g: 'bad' },
+  { k: 'inc',     t: 'Incomplete',             g: 'bad' },
+  { k: 'short',   t: 'Short of the sticks',    g: 'bad' },
+  { k: 'sack',    t: 'Sacked',                 g: 'bad' },
+  { k: 'int',     t: 'Intercepted',            g: 'bad' },
+  { k: 'failed',  t: "Didn't work",            g: 'bad' },
+];
+const RK = Object.fromEntries(RES.map((r) => [r.k, r]));
+const GAINS = ['Loss', '0', '1–4', '5–9', '10–19', '20+'];
+const TARGETS = ['X', 'Y', 'Z', 'HB', 'C', 'QB'];
+const INKCOL = [['#e5251b', 'Red'], ['#1565ff', 'Blue'], ['#111111', 'Black'], ['#12a150', 'Green']];
+
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const pad2 = (n) => String(n).padStart(2, '0');
+const byId = (id) => PLAYS.find((p) => p.id === id);
+
+/* ------------------------------------------------------------------ storage */
+let S = { v: 1, rev: 0, ov: {}, games: [], cur: null, log: [], sort: 'sit' };
+let INK = {};
+function idb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('flagplays', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function kvGet(k) {
+  try {
+    const db = await idb();
+    return await new Promise((res, rej) => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  } catch (e) { try { return JSON.parse(localStorage.getItem('fp_' + k)); } catch (e2) { return undefined; } }
+}
+async function kvSet(k, v) {
+  try {
+    const db = await idb();
+    await new Promise((res, rej) => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); });
+  } catch (e) { try { localStorage.setItem('fp_' + k, JSON.stringify(v)); } catch (e2) {} }
+}
+let saveT = null, inkT = null;
+function save() { S.rev++; clearTimeout(saveT); saveT = setTimeout(flushMain, 250); }
+function saveInk() { clearTimeout(inkT); inkT = setTimeout(flushInk, 250); }
+function flushMain() { clearTimeout(saveT); saveT = null; kvSet('main', S); try { localStorage.setItem('fp_main', JSON.stringify(S)); } catch (e) {} }
+function flushInk() { clearTimeout(inkT); inkT = null; kvSet('ink', INK); }
+addEventListener('pagehide', () => { if (saveT) flushMain(); if (inkT) flushInk(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { if (saveT) flushMain(); if (inkT) flushInk(); } });
+
+async function load() {
+  let a = await kvGet('main'), b = null;
+  try { b = JSON.parse(localStorage.getItem('fp_main')); } catch (e) {}
+  const pick = (a && b) ? ((b.rev || 0) > (a.rev || 0) ? b : a) : (a || b);
+  if (pick && pick.v === 1) S = Object.assign(S, pick);
+  INK = (await kvGet('ink')) || {};
+  if (!S.games.length) newGame();
+  if (!curGame()) S.cur = S.games[S.games.length - 1].id;
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+}
+function dateLabel(ts) { return new Date(ts).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }); }
+function newGame(name) {
+  const g = { id: uid(), ts: Date.now(), name: (name || '').trim() || `Game ${S.games.length + 1}` };
+  S.games.push(g); S.cur = g.id; save(); return g;
+}
+const curGame = () => S.games.find((g) => g.id === S.cur);
+const gameName = (id) => { const g = S.games.find((x) => x.id === id); return g ? g.name : '?'; };
+
+/* ------------------------------------------------------------------ derived data */
+const eff = (p) => { const o = S.ov[p.id] || {}; return { cat: o.cat || p.cat, tags: o.tags || p.tags }; };
+function outcome(e) {
+  if (!e.res || !e.res.length) return null;
+  const gs = e.res.map((k) => (RK[k] || {}).g);
+  const g = gs.includes('good'), b = gs.includes('bad'), m = gs.includes('mid');
+  if (g && !b && !m) return 1;
+  if (b && !g && !m) return 0;
+  return 0.5;
+}
+let STATS = {};
+function buildStats() {
+  STATS = {};
+  for (const p of PLAYS) STATS[p.id] = { n: 0, ng: 0, sc: [], gameEs: [], all: [] };
+  for (const e of S.log) {
+    const st = STATS[e.play]; if (!st) continue;
+    st.n++; st.all.push(e);
+    const o = outcome(e); if (o != null) st.sc.push(o);
+    if (e.game === S.cur) { st.ng++; st.gameEs.push(e); }
+  }
+  for (const id in STATS) { const st = STATS[id]; st.score = st.sc.length ? st.sc.reduce((a, b) => a + b, 0) / st.sc.length : null; }
+}
+const tagBg = (tags) => {
+  if (!tags.length) return 'var(--card)';
+  if (tags.length === 1) return TAGCOL[tags[0]];
+  const n = tags.length;
+  return 'conic-gradient(from 45deg,' + tags.map((t, i) => `${TAGCOL[t]} ${(i / n * 100).toFixed(1)}% ${((i + 1) / n * 100).toFixed(1)}%`).join(',') + ')';
+};
+
+/* ------------------------------------------------------------------ UI state */
+const F = { cat: null, tags: new Set(), hot: false, fresh: false, concept: null, q: '', more: false };
+const UI = { view: 'browse', from: 'browse', id: null, list: [], entry: null, temp: [], draw: false, layer: 'temp', tool: 'pen', color: '#e5251b', size: 1, hideKeep: false, finger: false, scroll: 0 };
+try { UI.penSeen = localStorage.getItem('fp_pen') === '1'; } catch (e) {}
+
+function matchQ(p, q) {
+  q = q.trim().toLowerCase().replace(/^#/, '');
+  if (!q) return true;
+  if (/^\d+$/.test(q)) return String(p.id).startsWith(q);
+  return q.split(/\s+/).every((w) => p.name.toLowerCase().includes(w));
+}
+function passes(p, ignoreCat) {
+  const e = eff(p), st = STATS[p.id];
+  if (!ignoreCat && F.cat && e.cat !== F.cat) return false;
+  if (F.tags.size && !e.tags.some((t) => F.tags.has(t))) return false;
+  if (F.hot && !(st.score != null && st.score >= 0.6)) return false;
+  if (F.fresh && st.ng > 0) return false;
+  if (F.concept != null && !CONCEPTS[F.concept][1].test(p.name)) return false;
+  return matchQ(p, F.q);
+}
+function visible() {
+  const ps = PLAYS.filter((p) => passes(p));
+  if (S.sort === 'num') return ps.sort((a, b) => a.id - b.id);
+  if (S.sort === 'best') return ps.sort((a, b) => ((STATS[b.id].score ?? -1) - (STATS[a.id].score ?? -1)) || (STATS[b.id].sc.length - STATS[a.id].sc.length) || a.id - b.id);
+  if (S.sort === 'fresh') return ps.sort((a, b) => (STATS[a.id].ng - STATS[b.id].ng) || a.id - b.id);
+  return ps.sort((a, b) => (CATS.findIndex((c) => c.k === eff(a).cat) - CATS.findIndex((c) => c.k === eff(b).cat)) || a.id - b.id);
+}
+const anyFilter = () => F.cat || F.tags.size || F.hot || F.fresh || F.concept != null || F.q;
+
+/* ------------------------------------------------------------------ browse */
+function topbar(active) {
+  const g = curGame();
+  return `<header class="top">
+    <div class="row"><h1>Flag Plays</h1>
+      <button class="tab ${active === 'browse' ? 'on' : ''}" data-act="tab" data-v="browse">Plays</button>
+      <button class="tab ${active === 'log' ? 'on' : ''}" data-act="tab" data-v="log">Game log</button>
+      <button class="chip-game" data-act="menu" title="Game & settings">${esc(g.name)} ▾</button></div>
+    ${active === 'browse' ? `<div class="row"><input class="search" id="q" type="search" placeholder="Search name or number" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(F.q)}"><button class="ib" data-act="numpad" aria-label="Jump to number">#</button></div>` : ''}
+  </header>`;
+}
+function renderBrowse() {
+  UI.view = 'browse'; buildStats();
+  $('#app').innerHTML = `${topbar('browse')}<div class="filters" id="filters"></div><main class="scroll" id="scroll"><div id="grid"></div></main>`;
+  const q = $('#q');
+  q.addEventListener('input', () => { F.q = q.value; refresh(); });
+  q.addEventListener('keydown', (e) => { if (e.key === 'Enter') q.blur(); });
+  refresh();
+  $('#scroll').scrollTop = UI.scroll || 0;
+}
+function refresh() {
+  const sc = S.sort;
+  const catCount = (k) => PLAYS.filter((p) => passes(p, true) && eff(p).cat === k).length;
+  const total = PLAYS.filter((p) => passes(p, true)).length;
+  $('#filters').innerHTML = `
+    <div class="pills">
+      <button class="pill ${!F.cat ? 'on' : ''}" data-act="cat" data-k="">All <small>${total}</small></button>
+      ${CATS.map((c) => `<button class="pill cat ${F.cat === c.k ? 'on' : ''}" style="--c:${c.c}" data-act="cat" data-k="${c.k}">${c.t} <small>${catCount(c.k)}</small></button>`).join('')}
+    </div>
+    <div class="pills">
+      ${TAGS.map((t) => `<button class="pill t-${t.k} ${F.tags.has(t.k) ? 'on' : ''}" data-act="tag" data-k="${t.k}">${t.t}</button>`).join('')}
+      <button class="pill ${F.hot ? 'on' : ''}" data-act="hot">🔥 Working</button>
+      <button class="pill ${F.fresh ? 'on' : ''}" data-act="fresh">Not called yet</button>
+      <button class="pill ghost" data-act="more">${F.more ? 'Less ▴' : 'More ▾'}</button>
+      ${anyFilter() ? '<button class="pill ghost" data-act="clear">✕ Clear</button>' : ''}
+    </div>
+    ${F.more ? `<div class="pills">${CONCEPTS.map((c, i) => `<button class="pill ${F.concept === i ? 'on' : ''}" data-act="concept" data-i="${i}">${c[0]}</button>`).join('')}</div>
+    <div class="pills">${[['sit', 'Group by situation'], ['num', 'By number'], ['best', 'Best first'], ['fresh', 'Least called']].map(([k, t]) => `<button class="pill ${sc === k ? 'on' : ''}" data-act="sort" data-k="${k}">${t}</button>`).join('')}</div>` : ''}`;
+  const ps = visible();
+  if (!ps.length) {
+    $('#grid').innerHTML = `<div class="empty">No plays match.<br>${anyFilter() ? '<button class="pill" data-act="clear">Clear filters</button>' : ''}</div>`;
+    return;
+  }
+  if (S.sort === 'sit' && !F.cat) {
+    $('#grid').innerHTML = CATS.map((c) => {
+      const g = ps.filter((p) => eff(p).cat === c.k); if (!g.length) return '';
+      return `<h2 class="grp" style="--c:${c.c}">${c.t}<small>${g.length}</small></h2><div class="grid">${g.map(card).join('')}</div>`;
+    }).join('');
+  } else $('#grid').innerHTML = `<div class="grid" style="margin-top:8px">${ps.map(card).join('')}</div>`;
+}
+function card(p) {
+  const e = eff(p), st = STATS[p.id];
+  const dots = st.gameEs.map((x) => { const o = outcome(x); return `<i class="dot ${o === 1 ? 'g' : o === 0 ? 'b' : o === 0.5 ? 'm' : ''}"></i>`; }).join('');
+  const pct = st.sc.length >= 2 ? `<span>${Math.round(st.score * 100)}%</span>` : '';
+  return `<button class="card" data-act="open" data-id="${p.id}">${p.mark ? `<span class="mark">${esc(p.mark)}</span>` : ''}
+    <span class="num" style="background:${tagBg(e.tags)}">${p.id}</span><span class="nm">${esc(p.name)}</span><span class="meta">${dots}${pct}</span></button>`;
+}
+
+/* ------------------------------------------------------------------ game log view */
+function renderLog() {
+  UI.view = 'log'; buildStats();
+  const es = S.log.filter((e) => e.game === S.cur).slice().reverse();
+  const sc = es.map(outcome).filter((x) => x != null);
+  const ok = sc.filter((x) => x === 1).length, bad = sc.filter((x) => x === 0).length;
+  $('#app').innerHTML = `${topbar('log')}<main class="scroll" id="scroll">
+    <div class="sum"><span><b>${es.length}</b> calls</span><span style="color:var(--good)"><b>${ok}</b> worked</span><span style="color:var(--bad)"><b>${bad}</b> didn't</span><span style="color:var(--mute)">${esc(curGame().name)}</span></div>
+    ${es.length ? es.map((e) => entryRow(e, true)).join('') : '<div class="empty">No calls yet this game.<br>Open a play and tap CALL IT.</div>'}</main>`;
+}
+function entryRow(e, withGame) {
+  const p = byId(e.play), o = outcome(e);
+  const tags = (e.res || []).map((k) => `<span class="tag ${RK[k] ? RK[k].g : 'plain'}">${esc(RK[k] ? RK[k].t : k)}</span>`).join('')
+    + (e.target ? `<span class="tag plain">→ ${esc(e.target)}</span>` : '') + (e.gain ? `<span class="tag plain">${esc(e.gain)} yds</span>` : '') + (e.down ? `<span class="tag plain">${e.down}${['st', 'nd', 'rd', 'th'][e.down - 1]} down</span>` : '');
+  const when = new Date(e.ts).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
+  return `<button class="hrow" data-act="editEntry" data-id="${e.id}"><span class="num" style="background:${tagBg(eff(p).tags)}">${p.id}</span>
+    <span class="b"><div class="t">${esc(p.name)}</div><div class="s">${withGame ? when : esc(gameName(e.game)) + ' · ' + dateLabel(e.ts)}${o == null ? ' · no result yet' : ''}</div><div>${tags}</div>${e.note ? `<div class="s" style="font-style:italic;margin-top:2px">“${esc(e.note)}”</div>` : ''}</span></button>`;
+}
+
+/* ------------------------------------------------------------------ play view */
+function openPlay(id, entryId) {
+  UI.from = UI.view === 'play' ? UI.from : UI.view;
+  if (UI.view === 'browse') UI.scroll = ($('#scroll') || {}).scrollTop || 0;
+  UI.view = 'play'; UI.id = id; UI.entry = entryId || null; UI.temp = []; UI.draw = false; UI.layer = 'temp';
+  if (UI.from === 'browse' && !entryId) { UI.list = visible().map((p) => p.id); }
+  else if (UI.from === 'log') UI.list = S.log.filter((e) => e.game === S.cur).map((e) => e.play).filter((v, i, a) => a.indexOf(v) === i);
+  if (!UI.list.includes(id)) UI.list = [id];
+  renderPlay();
+}
+function renderPlay() {
+  buildStats();
+  const p = byId(UI.id), e = eff(p), i = UI.list.indexOf(p.id);
+  $('#app').innerHTML = `<div class="pv" id="pv"><header class="pbar">
+      <button class="ib wide" data-act="back" aria-label="Back to plays">‹ Plays</button>
+      <div class="pt"><span class="num" style="background:${tagBg(e.tags)}">${p.id}</span><span class="pname">${esc(p.name)}</span></div>
+      <div class="nav"><button class="ib" data-act="prev" aria-label="Previous play">‹</button><span>${i + 1}/${UI.list.length}</span><button class="ib" data-act="next" aria-label="Next play">›</button></div>
+    </header>
+    <div class="pbody"><div class="stage" id="stage"><div class="box" id="box"><img id="pimg" alt="Play ${p.id}: ${esc(p.name)}" src="plays/${pad2(p.id)}.webp" draggable="false"><canvas id="ink"></canvas></div>
+      <div class="tools" id="tools"></div><div class="layer-badge" id="badge" hidden></div></div>
+      <aside class="panel" id="panel"></aside></div></div>`;
+  renderPanel(); renderTools(); wireStage();
+  new ResizeObserver(() => { fitBox(); }).observe($('#stage'));
+  fitBox();
+}
+function curEntry() { return UI.entry ? S.log.find((x) => x.id === UI.entry) : null; }
+function renderPanel() {
+  const p = byId(UI.id), st = STATS[p.id], ent = curEntry();
+  const panel = $('#panel'); if (!panel) return;
+  if (!ent) {
+    const last = st.all[st.all.length - 1];
+    const pct = st.score != null ? `<b>${Math.round(st.score * 100)}%</b> worked` : 'no results yet';
+    panel.innerHTML = `<button class="call" data-act="call">▶ CALL IT</button>
+      <div class="pstats">Called <b>${st.n}×</b> · ${pct} · this game <b>${st.ng}×</b></div>
+      <div class="prow"><button class="btn" data-act="draw">✏️ Draw</button><button class="btn" data-act="hist">Notes & history${st.n ? ' (' + st.n + ')' : ''}</button><button class="btn" data-act="tags">Edit tags</button></div>
+      ${last && last.note ? `<p class="last">Last time: “${esc(last.note)}”</p>` : ''}`;
+    return;
+  }
+  const has = (k) => ent.res.includes(k);
+  panel.innerHTML = `<div class="ptop"><h3>How did it go?</h3><button class="btn pri" data-act="done">Done ✓</button></div>
+    <div class="chips">${RES.map((r) => `<button class="rc ${r.g} ${has(r.k) ? 'on' : ''}" data-act="res" data-k="${r.k}">${r.t}</button>`).join('')}</div>
+    <div class="lab">Gain</div><div class="chips">${GAINS.map((g) => `<button class="rc plain ${ent.gain === g ? 'on' : ''}" data-act="gain" data-k="${g}">${g}</button>`).join('')}</div>
+    <div class="lab">Thrown to</div><div class="chips">${TARGETS.map((g) => `<button class="rc plain ${ent.target === g ? 'on' : ''}" data-act="target" data-k="${g}">${g}</button>`).join('')}</div>
+    <div class="lab">Down</div><div class="chips">${[1, 2, 3, 4].map((d) => `<button class="rc plain ${ent.down === d ? 'on' : ''}" data-act="down" data-k="${d}">${d}</button>`).join('')}</div>
+    <div class="lab">Note</div><div class="noteRow"><textarea class="note" id="note" placeholder="Anything worth remembering…">${esc(ent.note || '')}</textarea><button class="mic" id="mic" data-act="mic" aria-label="Dictate">🎤</button></div>
+    <div class="prow" style="margin-top:12px"><button class="btn" data-act="draw">✏️ Draw</button><button class="btn danger" data-act="delEntry">Delete this call</button></div>`;
+  $('#note').addEventListener('input', (ev) => { ent.note = ev.target.value; save(); });
+}
+function fitBox() {
+  const stage = $('#stage'), box = $('#box'); if (!stage || !box) return;
+  const sw = stage.clientWidth, sh = stage.clientHeight; if (!sw || !sh) return;
+  const w = Math.floor(Math.min(sw, sh * IMG_W / IMG_H)), h = Math.floor(w * IMG_H / IMG_W);
+  box.style.width = w + 'px'; box.style.height = h + 'px';
+  const cv = $('#ink'), dpr = Math.min(window.devicePixelRatio || 1, 3);
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  redraw();
+}
+
+/* ---- ink ---- */
+const layerArr = (k = UI.layer) => k === 'keep' ? (INK[UI.id] || (INK[UI.id] = [])) : UI.temp;
+function strokeOn(ctx, s, W) {
+  const pts = s.p; if (!pts.length) return;
+  ctx.strokeStyle = ctx.fillStyle = s.c; ctx.lineCap = ctx.lineJoin = 'round';
+  if (s.k === 'hl') {
+    ctx.globalAlpha = 0.35; ctx.lineWidth = s.w * W; ctx.beginPath(); ctx.moveTo(pts[0][0] * W, pts[0][1] * W * IMG_H / IMG_W);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0] * W, pts[i][1] * W * IMG_H / IMG_W);
+    ctx.stroke(); ctx.globalAlpha = 1; return;
+  }
+  const H = W * IMG_H / IMG_W;
+  if (pts.length === 1) { ctx.beginPath(); ctx.arc(pts[0][0] * W, pts[0][1] * H, s.w * W * 0.5, 0, 7); ctx.fill(); return; }
+  for (let i = 1; i < pts.length; i++) segment(ctx, s, pts[i - 1], pts[i], W, H);
+}
+function segment(ctx, s, a, b, W, H) {
+  ctx.lineWidth = s.w * W * (0.5 + 1.0 * ((a[2] + b[2]) / 2));
+  ctx.beginPath(); ctx.moveTo(a[0] * W, a[1] * H); ctx.lineTo(b[0] * W, b[1] * H); ctx.stroke();
+}
+function redraw() {
+  const cv = $('#ink'); if (!cv) return;
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height);
+  if (!UI.hideKeep) (INK[UI.id] || []).forEach((s) => strokeOn(ctx, s, cv.width));
+  UI.temp.forEach((s) => strokeOn(ctx, s, cv.width));
+  updateBadge();
+}
+function updateBadge() {
+  const b = $('#badge'); if (!b) return;
+  const n = (INK[UI.id] || []).length;
+  b.hidden = !n || UI.draw;
+  b.textContent = (UI.hideKeep ? 'Saved marks hidden' : `✏️ ${n} saved mark${n > 1 ? 's' : ''}`) + ' · tap to toggle';
+}
+function renderTools() {
+  const t = $('#tools'), pv = $('#pv'); if (!t) return;
+  pv.classList.toggle('drawing', UI.draw);
+  if (!UI.draw) { t.innerHTML = ''; updateBadge(); return; }
+  const keep = UI.layer === 'keep';
+  t.innerHTML = `<div class="tgrp"><button class="tb ${!keep ? 'on' : ''}" data-act="layer" data-k="temp">Temp</button><button class="tb ${keep ? 'on' : ''}" data-act="layer" data-k="keep">Keep</button></div>
+    <div class="tgrp">${INKCOL.map(([c, n]) => `<button class="sw ${UI.tool === 'pen' && UI.color === c ? 'on' : ''}" data-act="color" data-c="${c}" aria-label="${n}"><i style="background:${c}"></i></button>`).join('')}
+      <button class="sw ${UI.tool === 'hl' ? 'on' : ''}" data-act="hl" aria-label="Highlighter"><i style="background:#ffe45c"></i></button>
+      <button class="tb ${UI.tool === 'erase' ? 'on' : ''}" data-act="erase">⌫</button></div>
+    <div class="tgrp"><button class="tb" data-act="size">${['•', '●', '⬤'][UI.size]}</button><button class="tb" data-act="undo">↩︎</button><button class="tb" data-act="clearInk">🗑</button>
+      <button class="tb ${UI.finger ? 'on' : ''}" data-act="finger" title="Allow finger drawing">☝︎</button><button class="tb" data-act="drawOff">✓ Done</button></div>`;
+}
+function wireStage() {
+  const cv = $('#ink'), stage = $('#stage');
+  let cur = null, sx = 0, sy = 0, swiping = false;
+  const pos = (ev) => { const r = cv.getBoundingClientRect(); return [(ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.width]; };
+  const touchOK = (ev) => ev.pointerType !== 'touch' || UI.finger || !UI.penSeen;
+  const W = () => cv.getBoundingClientRect().width;
+  cv.addEventListener('pointerdown', (ev) => {
+    if (!UI.draw || !touchOK(ev)) return;
+    if (ev.pointerType === 'pen' && !UI.penSeen) { UI.penSeen = true; try { localStorage.setItem('fp_pen', '1'); } catch (e) {} }
+    ev.preventDefault(); cv.setPointerCapture(ev.pointerId);
+    const x = pos(ev);
+    if (UI.tool === 'erase') { cur = { erase: true }; eraseAt(x); return; }
+    const base = UI.tool === 'hl' ? 0.028 : [0.0035, 0.007, 0.0125][UI.size];
+    cur = { k: UI.tool === 'hl' ? 'hl' : 'pen', c: UI.tool === 'hl' ? '#ffd400' : UI.color, w: base, p: [[x[0], x[1], pr(ev)]] };
+    layerArr().push(cur); redraw();
+  });
+  const pr = (ev) => (ev.pointerType === 'pen' && ev.pressure > 0) ? ev.pressure : 0.5;
+  cv.addEventListener('pointermove', (ev) => {
+    if (!cur) return;
+    ev.preventDefault();
+    const evs = ev.getCoalescedEvents ? ev.getCoalescedEvents() : [ev];
+    for (const e2 of (evs.length ? evs : [ev])) {
+      const x = pos(e2);
+      if (cur.erase) { eraseAt(x); continue; }
+      const last = cur.p[cur.p.length - 1]; if (Math.hypot(x[0] - last[0], x[1] - last[1]) < 0.0015) continue;
+      const pt = [x[0], x[1], pr(e2)]; cur.p.push(pt);
+      if (cur.k === 'hl') redraw(); else { const c = cv.getContext('2d'), w = cv.width; c.strokeStyle = cur.c; c.lineCap = 'round'; segment(c, cur, last, pt, w, w * IMG_H / IMG_W); }
+    }
+  });
+  const end = () => { if (!cur) return; const was = cur; cur = null; if (!was.erase && was.p.length === 1) was.p.push([was.p[0][0] + 0.0001, was.p[0][1], was.p[0][2]]); redraw(); if (UI.layer === 'keep') saveInk(); };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  function eraseAt(x) {
+    const arr = layerArr(), r = 18 / W(); let hit = false;
+    for (let i = arr.length - 1; i >= 0; i--) if (arr[i].p.some((q) => Math.hypot(q[0] - x[0], q[1] - x[1]) < r)) { arr.splice(i, 1); hit = true; }
+    if (hit) redraw();
+  }
+  // swipe between plays when not drawing
+  stage.addEventListener('pointerdown', (ev) => { if (UI.draw || ev.target.closest('.tools')) return; sx = ev.clientX; sy = ev.clientY; swiping = ev.pointerType === 'touch'; });
+  stage.addEventListener('pointerup', (ev) => {
+    if (!swiping) return; swiping = false;
+    const dx = ev.clientX - sx, dy = ev.clientY - sy;
+    if (Math.abs(dx) > 90 && Math.abs(dy) < 70) step(dx < 0 ? 1 : -1);
+  });
+}
+function step(d) {
+  const i = UI.list.indexOf(UI.id), j = i + d;
+  if (j < 0 || j >= UI.list.length) { toast(d > 0 ? 'Last play in this list' : 'First play in this list'); return; }
+  UI.id = UI.list[j]; UI.entry = null; UI.temp = []; UI.draw = false; UI.layer = 'temp'; renderPlay();
+}
+
+/* ------------------------------------------------------------------ sheets / toast / voice */
+let toastT = null;
+function toast(msg, label, fn) {
+  $('.toast') && $('.toast').remove(); clearTimeout(toastT);
+  const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = `<span>${esc(msg)}</span>${label ? `<button>${esc(label)}</button>` : ''}`;
+  if (label) t.querySelector('button').onclick = () => { t.remove(); fn(); };
+  document.body.appendChild(t); toastT = setTimeout(() => t.remove(), label ? 6000 : 1500);
+}
+function sheet(html, onWire) {
+  closeSheet();
+  const v = document.createElement('div'); v.className = 'veil'; v.id = 'veil';
+  v.innerHTML = `<div class="sheet">${html}</div>`;
+  v.addEventListener('click', (e) => { if (e.target === v) closeSheet(); });
+  document.body.appendChild(v); if (onWire) onWire(v);
+}
+function closeSheet() { const v = $('#veil'); if (v) v.remove(); }
+
+function numpadSheet() {
+  let s = '';
+  const draw = () => {
+    const n = +s, p = n ? byId(n) : null;
+    $('#padout').innerHTML = `${s || '–'}<span>${p ? esc(p.name) : (s ? 'no such play' : 'type a play number')}</span>`;
+  };
+  sheet(`<h3>Jump to play <button class="btn x" data-act="closeSheet">✕</button></h3><div class="padout" id="padout"></div>
+    <div class="pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-n="${n}">${n}</button>`).join('')}<button data-n="back">⌫</button><button data-n="0">0</button><button data-n="go" style="background:var(--accent);color:#fff;border-color:var(--accent)">Go</button></div>`, (v) => {
+    draw();
+    v.querySelectorAll('.pad button').forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.n;
+      if (k === 'back') s = s.slice(0, -1);
+      else if (k === 'go') { const p = byId(+s); if (p) { closeSheet(); openPlay(p.id); return; } }
+      else if (s.length < 2) s += k;
+      draw();
+      const n = +s;
+      if (k !== 'go' && k !== 'back' && byId(n) && (s.length === 2 || n * 10 > 50)) { setTimeout(() => { if (byId(+s) && $('#veil')) { closeSheet(); openPlay(+s); } }, 180); }
+    }));
+  });
+}
+function tagsSheet() {
+  const p = byId(UI.id);
+  const draw = () => {
+    const e = eff(p);
+    $('#tg').innerHTML = `<div class="lab">Situation</div><div class="chips">${CATS.map((c) => `<button class="pill cat ${e.cat === c.k ? 'on' : ''}" style="--c:${c.c}" data-k="${c.k}" data-w="cat">${c.t}</button>`).join('')}</div>
+      <div class="lab">Tags</div><div class="chips">${TAGS.map((t) => `<button class="pill t-${t.k} ${e.tags.includes(t.k) ? 'on' : ''}" data-k="${t.k}" data-w="tag">${t.t}</button>`).join('')}</div>`;
+  };
+  sheet(`<h3>#${p.id} ${esc(p.name)} <button class="btn x" data-act="closeSheet">Done</button></h3><div id="tg"></div>
+    <div class="prow" style="margin-top:16px"><button class="btn" id="rst">Reset to original</button></div>`, (v) => {
+    draw();
+    v.addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-w]'); if (b) {
+        const e = eff(p), o = S.ov[p.id] = Object.assign({}, S.ov[p.id]);
+        if (b.dataset.w === 'cat') o.cat = b.dataset.k;
+        else o.tags = e.tags.includes(b.dataset.k) ? e.tags.filter((x) => x !== b.dataset.k) : e.tags.concat(b.dataset.k);
+        save(); draw(); return;
+      }
+      if (ev.target.id === 'rst') { delete S.ov[p.id]; save(); draw(); }
+    });
+  });
+}
+function histSheet() {
+  const p = byId(UI.id), es = (STATS[p.id].all).slice().reverse();
+  sheet(`<h3>#${p.id} ${esc(p.name)} <button class="btn x" data-act="closeSheet">✕</button></h3>
+    ${es.length ? es.map((e) => entryRow(e, false)).join('') : '<div class="empty">Never called. Tap CALL IT when you run it.</div>'}`);
+}
+function menuSheet() {
+  const g = curGame();
+  sheet(`<h3>Game & settings <button class="btn x" data-act="closeSheet">Done</button></h3>
+    <div class="sect">This game</div>
+    <input class="field" id="gname" value="${esc(g.name)}" aria-label="Game name" autocapitalize="words">
+    <div class="prow" style="margin-top:10px"><button class="btn pri" data-act="newGame">+ New game</button></div>
+    ${S.games.length > 1 ? `<div class="sect">Switch game</div><div class="chips">${S.games.slice().reverse().map((x) => `<button class="pill ${x.id === S.cur ? 'on' : ''}" data-act="switchGame" data-id="${x.id}">${esc(x.name)} <small>${dateLabel(x.ts)}</small></button>`).join('')}</div>` : ''}
+    <div class="sect">Backup</div>
+    <div class="prow"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="import">Import backup</button></div>
+    <input type="file" id="imp" accept="application/json,.json" hidden>
+    <p class="s" style="color:var(--mute);font-size:14px">Everything lives on this iPad. Export now and then so a cleared Safari can’t take your notes and marks with it.</p>
+    <div class="sect">App</div>
+    <div style="color:var(--mute)">Flag Plays v${VERSION} · ${S.log.length} calls logged · ${Object.values(INK).reduce((a, b) => a + b.length, 0)} saved marks</div>
+    <div class="prow" style="margin-top:10px"><button class="btn" data-act="reload">Check for update / reload</button></div>`, (v) => {
+    const gn = $('#gname', v);
+    gn.addEventListener('change', () => { curGame().name = gn.value.trim() || curGame().name; save(); });
+    $('#imp', v).addEventListener('change', importFile);
+  });
+}
+async function doExport() {
+  flushMain(); flushInk();
+  const data = JSON.stringify({ app: 'flag-plays', v: 1, exported: new Date().toISOString(), state: S, ink: INK });
+  const name = `flag-plays-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  try {
+    const f = new File([data], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+function importFile(ev) {
+  const f = ev.target.files[0]; if (!f) return;
+  f.text().then((t) => {
+    const d = JSON.parse(t);
+    if (d.app !== 'flag-plays' || !d.state) throw new Error('bad');
+    if (!confirm(`Replace everything on this iPad with the backup from ${d.exported ? d.exported.slice(0, 10) : 'unknown date'}?`)) return;
+    S = Object.assign({ v: 1, rev: 0, ov: {}, games: [], cur: null, log: [], sort: 'sit' }, d.state); INK = d.ink || {};
+    if (!S.games.length) newGame(); if (!curGame()) S.cur = S.games[0].id;
+    save(); saveInk(); closeSheet(); renderBrowse(); toast('Backup restored');
+  }).catch(() => toast('That file isn’t a Flag Plays backup'));
+}
+function mic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition, note = $('#note'), btn = $('#mic');
+  const fallback = () => { toast('Use the 🎤 key on the iPad keyboard to dictate'); note.focus(); };
+  if (!SR) return fallback();
+  try {
+    const r = new SR(); r.lang = 'en-US'; r.interimResults = false;
+    r.onresult = (e) => { const t = [...e.results].map((x) => x[0].transcript).join(' '); note.value = (note.value ? note.value + ' ' : '') + t; note.dispatchEvent(new Event('input')); };
+    r.onerror = () => { btn.classList.remove('on'); fallback(); };
+    r.onend = () => btn.classList.remove('on');
+    btn.classList.add('on'); r.start();
+  } catch (e) { fallback(); }
+}
+
+/* ------------------------------------------------------------------ actions */
+const ACT = {
+  tab: (el) => { UI.view = el.dataset.v; el.dataset.v === 'log' ? renderLog() : renderBrowse(); },
+  cat: (el) => { F.cat = el.dataset.k || null; refresh(); },
+  tag: (el) => { const k = el.dataset.k; F.tags.has(k) ? F.tags.delete(k) : F.tags.add(k); refresh(); },
+  hot: () => { F.hot = !F.hot; refresh(); },
+  fresh: () => { F.fresh = !F.fresh; refresh(); },
+  more: () => { F.more = !F.more; refresh(); },
+  concept: (el) => { const i = +el.dataset.i; F.concept = F.concept === i ? null : i; refresh(); },
+  sort: (el) => { S.sort = el.dataset.k; save(); refresh(); },
+  clear: () => { F.cat = null; F.tags.clear(); F.hot = F.fresh = false; F.concept = null; F.q = ''; const q = $('#q'); if (q) q.value = ''; refresh(); },
+  open: (el) => openPlay(+el.dataset.id),
+  numpad: numpadSheet,
+  menu: menuSheet,
+  closeSheet,
+  back: () => { UI.temp = []; UI.draw = false; UI.from === 'log' ? renderLog() : renderBrowse(); },
+  prev: () => step(-1),
+  next: () => step(1),
+  call: () => {
+    const e = { id: uid(), play: UI.id, game: S.cur, ts: Date.now(), res: [], gain: null, target: null, down: null, note: '' };
+    S.log.push(e); UI.entry = e.id; save(); buildStats(); renderPanel();
+  },
+  res: (el) => { const e = curEntry(), k = el.dataset.k; e.res = e.res.includes(k) ? e.res.filter((x) => x !== k) : e.res.concat(k); save(); renderPanel(); },
+  gain: (el) => { const e = curEntry(); e.gain = e.gain === el.dataset.k ? null : el.dataset.k; save(); renderPanel(); },
+  target: (el) => { const e = curEntry(); e.target = e.target === el.dataset.k ? null : el.dataset.k; save(); renderPanel(); },
+  down: (el) => { const e = curEntry(), d = +el.dataset.k; e.down = e.down === d ? null : d; save(); renderPanel(); },
+  done: () => { UI.entry = null; UI.temp = []; UI.draw = false; buildStats(); renderPlay(); toast('Saved'); },
+  delEntry: () => { if (!confirm('Delete this call?')) return; S.log = S.log.filter((x) => x.id !== UI.entry); UI.entry = null; save(); buildStats(); renderPanel(); },
+  editEntry: (el) => { const e = S.log.find((x) => x.id === el.dataset.id); closeSheet(); openPlay(e.play, e.id); },
+  mic,
+  tags: tagsSheet,
+  hist: histSheet,
+  draw: () => { UI.draw = true; renderTools(); updateBadge(); },
+  drawOff: () => { UI.draw = false; renderTools(); updateBadge(); },
+  layer: (el) => { UI.layer = el.dataset.k; renderTools(); if (UI.layer === 'keep') UI.hideKeep = false, redraw(); },
+  color: (el) => { UI.tool = 'pen'; UI.color = el.dataset.c; renderTools(); },
+  hl: () => { UI.tool = 'hl'; renderTools(); },
+  erase: () => { UI.tool = 'erase'; renderTools(); },
+  size: () => { UI.size = (UI.size + 1) % 3; renderTools(); },
+  finger: () => { UI.finger = !UI.finger; renderTools(); toast(UI.finger ? 'Finger drawing on' : 'Finger drawing off (pencil only)'); },
+  undo: () => { layerArr().pop(); redraw(); if (UI.layer === 'keep') saveInk(); },
+  clearInk: () => {
+    const keep = UI.layer === 'keep';
+    if (!layerArr().length) return;
+    if (keep && !confirm('Delete ALL saved marks on this play?')) return;
+    if (keep) INK[UI.id] = []; else UI.temp = [];
+    redraw(); if (keep) saveInk();
+  },
+  newGame: () => { const name = prompt('Name this game (e.g. “vs Engineers”)', ''); if (name === null) return; newGame(name); closeSheet(); UI.view === 'log' ? renderLog() : renderBrowse(); toast('New game started'); },
+  switchGame: (el) => { S.cur = el.dataset.id; save(); closeSheet(); UI.view === 'log' ? renderLog() : renderBrowse(); },
+  export: doExport,
+  import: () => $('#imp').click(),
+  reload: () => { if (navigator.serviceWorker) navigator.serviceWorker.getRegistration().then((r) => r && r.update()).finally(() => location.reload()); else location.reload(); },
+};
+document.addEventListener('click', (ev) => {
+  const b = $('#badge');
+  if (b && !b.hidden && b.contains(ev.target)) { UI.hideKeep = !UI.hideKeep; redraw(); return; }
+  const el = ev.target.closest('[data-act]'); if (!el) return;
+  const fn = ACT[el.dataset.act]; if (fn) fn(el, ev);
+});
+
+/* ------------------------------------------------------------------ boot */
+load().then(() => {
+  UI.view = 'browse'; renderBrowse();
+  document.addEventListener('swupdated', () => toast('New version ready', 'Reload', () => location.reload()));
+});
+</script>
+</body>
+</html>

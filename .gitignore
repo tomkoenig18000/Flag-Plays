@@ -1,0 +1,4 @@
+# The playbook PDF is the team's; keep it out of the repo
+*.pdf
+node_modules/
+.DS_Store
