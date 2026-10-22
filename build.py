@@ -37,7 +37,7 @@ html = html.replace('</body>', SW_REG + '</body>')
         {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
         {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]}, indent=2) + '\n')
 
-imgs = [f'./plays/{p["id"]:02d}.webp' for p in PLAYS]
+imgs = [f'./{d}/{p["id"]:02d}.webp' for d in ('plays', 'thumbs') for p in PLAYS]
 shell = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'] + imgs
 (site / 'sw.js').write_text(f'''// Flag Plays service worker — v{VERSION}
 const CACHE = 'flagplays-v{VERSION}';
@@ -53,7 +53,7 @@ self.addEventListener('fetch', (e) => {{
   const req = e.request; if (req.method !== 'GET') return;
   const url = new URL(req.url); if (url.origin !== self.location.origin) return;
   // play images never change for a given version: cache-first
-  if (url.pathname.includes('/plays/')) {{
+  if (url.pathname.includes('/plays/') || url.pathname.includes('/thumbs/')) {{
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {{ const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); return res; }})));
     return;
   }}

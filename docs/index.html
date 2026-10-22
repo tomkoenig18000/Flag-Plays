@@ -54,18 +54,25 @@ button{touch-action:manipulation;cursor:pointer;border:0;background:none;padding
 .pill.t-run.on{background:var(--run);border-color:#d9588f;color:#222}
 .pill.t-bunch.on{background:var(--bunch);border-color:#d27a1e;color:#222}
 .pill.ghost{background:transparent;border-style:dashed;color:var(--mute)}
-.scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 12px)}
+.scroll{touch-action:pan-y;flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 12px)}
 .grp{display:flex;align-items:baseline;gap:8px;margin:16px 0 8px;font-size:22px;color:var(--c);border-bottom:3px solid var(--c);padding-bottom:2px}
 .grp small{color:var(--mute);font-size:15px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
-.card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px 10px;border-radius:16px;background:var(--card);border:1px solid var(--line);text-align:center;min-height:132px;position:relative}
+.grid{display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));gap:8px}
+.card{position:relative;display:block;padding:0;overflow:hidden;border-radius:12px;border:3px solid var(--cat,var(--line));background:#fff;container-type:inline-size;text-align:left}
 .card:active{transform:scale(.97)}
-.num{width:60px;height:60px;border-radius:50%;border:3px solid var(--ink);display:grid;place-items:center;font-size:26px;font-weight:800;color:#111;background:var(--card)}
-.card .nm{font-size:15px;font-weight:600;line-height:1.15}
-.card .meta{display:flex;gap:4px;align-items:center;min-height:16px;font-size:12px;color:var(--mute)}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--mute)}
+.card img{display:block;width:100%;aspect-ratio:948/1226;object-fit:cover;-webkit-user-drag:none}
+.cap{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:6px;padding:4px;background:rgba(255,255,255,.86)}
+.num{width:60px;height:60px;border-radius:50%;border:3px solid #14201a;display:grid;place-items:center;font-size:26px;font-weight:800;color:#111;background:#fff}
+.cap .num{width:clamp(24px,17cqw,46px);height:clamp(24px,17cqw,46px);font-size:clamp(12px,8.5cqw,23px);border-width:2px;flex:none}
+.cap .nm{font-size:clamp(10px,6.4cqw,16px);font-weight:700;line-height:1.1;color:#111;min-width:0}
+.dense .cap{right:auto;background:none;padding:3px}
+.dense .cap .nm,.dense .cap .mark{display:none}
+.card .meta{position:absolute;right:4px;bottom:4px;display:flex;gap:3px;align-items:center;padding:2px 6px;border-radius:9px;background:rgba(255,255,255,.9);font-size:12px;font-weight:700;color:#333}
+.card .meta:empty{display:none}
+.dense .card .meta span{display:none}
+.dot{width:10px;height:10px;border-radius:50%;background:#777}
 .dot.g{background:var(--good)}.dot.m{background:var(--mid)}.dot.b{background:var(--bad)}
-.mark{position:absolute;top:6px;right:10px;font-weight:800;color:var(--bad);font-size:18px}
+.mark{margin-left:auto;font-weight:800;color:var(--bad);font-size:18px;padding-right:4px}
 .empty{padding:40px 12px;text-align:center;color:var(--mute)}
 .empty .pill{margin-top:12px}
 
@@ -149,7 +156,7 @@ button{touch-action:manipulation;cursor:pointer;border:0;background:none;padding
 <body>
 <div id="app"></div>
 <script>
-const VERSION = 1;
+const VERSION = 2;
 const PLAYS = [{"id":1,"name":"Double Motion Option Shovel","cat":"short","tags":["run"]},{"id":2,"name":"Twins Salem Boot Left","cat":"mid","tags":[]},{"id":3,"name":"Twins Left Slay","cat":"short","tags":[]},{"id":4,"name":"Trips Spacing HB Option","cat":"short","tags":[]},{"id":5,"name":"Stack Left Switch","cat":"short","tags":[]},{"id":6,"name":"4 Quick Hitch & Go","cat":"mid","tags":[]},{"id":7,"name":"Sail Right Hook & Ladder","cat":"trick","tags":["fav"]},{"id":8,"name":"Twins Stacked Left Post Wheel","cat":"long","tags":[]},{"id":9,"name":"Scissors Right Cab","cat":"long","tags":[]},{"id":10,"name":"PA Boot Left Double Move","cat":"mid","tags":["fav"]},{"id":11,"name":"Trips Right HB Screen","cat":"short","tags":[]},{"id":12,"name":"Bunch Drive X Toss","cat":"mid","tags":["bunch"]},{"id":13,"name":"Bunch Post X Toss","cat":"long","tags":["bunch"]},{"id":14,"name":"Y-X Progression Read","cat":"mid","tags":[]},{"id":15,"name":"Bunch Draw-Pitch Option","cat":"mid","tags":["bunch"]},{"id":16,"name":"Smash Left Man Beater","cat":"short","tags":[]},{"id":17,"name":"Goaline Motion Out","cat":"goal","tags":[]},{"id":18,"name":"Stacks Post Wheel / V-in","cat":"mid","tags":[]},{"id":19,"name":"Mesh Traffic","cat":"goal","tags":["fav"],"mark":"G"},{"id":20,"name":"Motion Dagger","cat":"mid","tags":[]},{"id":21,"name":"Triple Option Shovel","cat":"short","tags":["run"]},{"id":22,"name":"Triple Option Flea Flicker","cat":"trick","tags":[]},{"id":23,"name":"Empty Mesh Pivot","cat":"short","tags":["fav"]},{"id":24,"name":"Dash Left","cat":"long","tags":["fav"]},{"id":25,"name":"C Tossback HB","cat":"short","tags":["run"]},{"id":26,"name":"Goaline Motion Bunch","cat":"goal","tags":[]},{"id":27,"name":"HB/Z Scissors","cat":"long","tags":[]},{"id":28,"name":"Jet Swing Pass","cat":"mid","tags":[]},{"id":29,"name":"Sprint Out Spacing","cat":"mid","tags":["fav"]},{"id":30,"name":"Progression Wheel Rub","cat":"goal","tags":["fav"],"mark":"K"},{"id":31,"name":"I Just Cooked Up Some BS!!","cat":"trick","tags":[]},{"id":32,"name":"Bunch Mills Toss","cat":"short","tags":["bunch"]},{"id":33,"name":"Left Drive Bunch","cat":"trick","tags":[]},{"id":34,"name":"Double Post Over","cat":"long","tags":[]},{"id":35,"name":"FB/Z Scissors","cat":"long","tags":["fav"]},{"id":36,"name":"Center Wheel","cat":"long","tags":[]},{"id":37,"name":"Dig-Post","cat":"mid","tags":["fav"]},{"id":38,"name":"HB Snag","cat":"mid","tags":[]},{"id":39,"name":"Bunch Corner Curl","cat":"mid","tags":["fav"]},{"id":40,"name":"Motion Z Spacing","cat":"short","tags":["fav"]},{"id":41,"name":"Motion Z Spacing 2","cat":"mid","tags":["fav"]},{"id":42,"name":"Motion Pop Pass","cat":"goal","tags":["fav"],"mark":"J"},{"id":43,"name":"Motion X Wheel","cat":"long","tags":[]},{"id":44,"name":"Motion HB Wheel","cat":"long","tags":[]},{"id":45,"name":"Motion Boot Right","cat":"mid","tags":[]},{"id":46,"name":"Reverse QB Wheel","cat":"trick","tags":[]},{"id":47,"name":"Slant Hitch Go","cat":"short","tags":[]},{"id":48,"name":"Mesh Dig","cat":"mid","tags":[]},{"id":49,"name":"Deep Hitch HB In","cat":"mid","tags":[]},{"id":50,"name":"Slant Wheel","cat":"long","tags":[]}];
 const IMG_W = 948, IMG_H = 1226;
 
@@ -307,7 +314,7 @@ function topbar(active) {
       <button class="tab ${active === 'browse' ? 'on' : ''}" data-act="tab" data-v="browse">Plays</button>
       <button class="tab ${active === 'log' ? 'on' : ''}" data-act="tab" data-v="log">Game log</button>
       <button class="chip-game" data-act="menu" title="Game & settings">${esc(g.name)} ▾</button></div>
-    ${active === 'browse' ? `<div class="row"><input class="search" id="q" type="search" placeholder="Search name or number" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(F.q)}"><button class="ib" data-act="numpad" aria-label="Jump to number">#</button></div>` : ''}
+    ${active === 'browse' ? `<div class="row"><input class="search" id="q" type="search" placeholder="Search name or number" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(F.q)}"><button class="ib" data-act="cols" data-d="1" aria-label="Fewer, bigger plays">＋</button><button class="ib" data-act="cols" data-d="-1" aria-label="More, smaller plays">－</button><button class="ib" data-act="numpad" aria-label="Jump to number">#</button></div>` : ''}
   </header>`;
 }
 function renderBrowse() {
@@ -316,7 +323,7 @@ function renderBrowse() {
   const q = $('#q');
   q.addEventListener('input', () => { F.q = q.value; refresh(); });
   q.addEventListener('keydown', (e) => { if (e.key === 'Enter') q.blur(); });
-  refresh();
+  refresh(); wirePinch($('#scroll'));
   $('#scroll').scrollTop = UI.scroll || 0;
 }
 function refresh() {
@@ -337,7 +344,8 @@ function refresh() {
     </div>
     ${F.more ? `<div class="pills">${CONCEPTS.map((c, i) => `<button class="pill ${F.concept === i ? 'on' : ''}" data-act="concept" data-i="${i}">${c[0]}</button>`).join('')}</div>
     <div class="pills">${[['sit', 'Group by situation'], ['num', 'By number'], ['best', 'Best first'], ['fresh', 'Least called']].map(([k, t]) => `<button class="pill ${sc === k ? 'on' : ''}" data-act="sort" data-k="${k}">${t}</button>`).join('')}</div>` : ''}`;
-  const ps = visible();
+  const ps = visible(), n = colsN(), g = $('#grid');
+  g.style.setProperty('--cols', n); g.classList.toggle('dense', n >= 6);
   if (!ps.length) {
     $('#grid').innerHTML = `<div class="empty">No plays match.<br>${anyFilter() ? '<button class="pill" data-act="clear">Clear filters</button>' : ''}</div>`;
     return;
@@ -349,12 +357,32 @@ function refresh() {
     }).join('');
   } else $('#grid').innerHTML = `<div class="grid" style="margin-top:8px">${ps.map(card).join('')}</div>`;
 }
+const colsN = () => S.cols || Math.max(2, Math.min(8, Math.round(innerWidth / 190)));
 function card(p) {
-  const e = eff(p), st = STATS[p.id];
+  const e = eff(p), st = STATS[p.id], cat = CATS.find((c) => c.k === e.cat);
   const dots = st.gameEs.map((x) => { const o = outcome(x); return `<i class="dot ${o === 1 ? 'g' : o === 0 ? 'b' : o === 0.5 ? 'm' : ''}"></i>`; }).join('');
   const pct = st.sc.length >= 2 ? `<span>${Math.round(st.score * 100)}%</span>` : '';
-  return `<button class="card" data-act="open" data-id="${p.id}">${p.mark ? `<span class="mark">${esc(p.mark)}</span>` : ''}
-    <span class="num" style="background:${tagBg(e.tags)}">${p.id}</span><span class="nm">${esc(p.name)}</span><span class="meta">${dots}${pct}</span></button>`;
+  const dir = colsN() <= 3 ? 'plays' : 'thumbs';
+  return `<button class="card" style="--cat:${cat.c}" data-act="open" data-id="${p.id}"><img loading="lazy" decoding="async" alt="" src="${dir}/${pad2(p.id)}.webp">
+    <span class="cap"><span class="num" style="background:${tagBg(e.tags)}">${p.id}</span><span class="nm">${esc(p.name)}</span>${p.mark ? `<span class="mark">${esc(p.mark)}</span>` : ''}</span>
+    <span class="meta">${dots}${pct}</span></button>`;
+}
+
+function setCols(n) {
+  n = Math.max(2, Math.min(10, n)); if (n === colsN() && S.cols === n) return;
+  S.cols = n; save(); refresh(); toast(n + ' across');
+}
+function wirePinch(el) {
+  let d0 = 0, n0 = 0;
+  const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  el.addEventListener('touchstart', (e) => { if (e.touches.length === 2) { d0 = dist(e.touches); n0 = colsN(); } }, { passive: true });
+  el.addEventListener('touchmove', (e) => {
+    if (e.touches.length !== 2 || !d0) return;
+    e.preventDefault();
+    const n = Math.round(n0 / (dist(e.touches) / d0));
+    if (n !== colsN()) setCols(n);
+  }, { passive: false });
+  el.addEventListener('touchend', () => { d0 = 0; });
 }
 
 /* ------------------------------------------------------------------ game log view */
@@ -656,6 +684,7 @@ const ACT = {
   clear: () => { F.cat = null; F.tags.clear(); F.hot = F.fresh = false; F.concept = null; F.q = ''; const q = $('#q'); if (q) q.value = ''; refresh(); },
   open: (el) => openPlay(+el.dataset.id),
   numpad: numpadSheet,
+  cols: (el) => setCols(colsN() - +el.dataset.d),
   menu: menuSheet,
   closeSheet,
   back: () => { UI.temp = []; UI.draw = false; UI.from === 'log' ? renderLog() : renderBrowse(); },
