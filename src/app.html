@@ -54,6 +54,7 @@ button{touch-action:manipulation;cursor:pointer;border:0;background:none;padding
 .pill.t-run.on{background:var(--run);border-color:#d9588f;color:#222}
 .pill.t-bunch.on{background:var(--bunch);border-color:#d27a1e;color:#222}
 .pill.ghost{background:transparent;border-style:dashed;color:var(--mute)}
+.bwrap{flex:1;min-height:0;display:flex;flex-direction:column}
 .scroll{touch-action:pan-y;flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 12px)}
 .grp{display:flex;align-items:baseline;gap:8px;margin:16px 0 8px;font-size:22px;color:var(--c);border-bottom:3px solid var(--c);padding-bottom:2px}
 .grp small{color:var(--mute);font-size:15px}
@@ -109,7 +110,7 @@ button{touch-action:manipulation;cursor:pointer;border:0;background:none;padding
 .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
 .btn.danger{color:var(--bad)}
 .last{margin:6px 0 0;font-size:15px;color:var(--mute);font-style:italic}
-.ptop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.ptop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;position:sticky;top:-10px;z-index:2;background:var(--card);padding:10px 0 6px;margin-top:-10px}
 .ptop h3{margin:0;font-size:19px}
 .lab{margin:10px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--mute);font-weight:700}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -148,7 +149,7 @@ button{touch-action:manipulation;cursor:pointer;border:0;background:none;padding
 .toast button{color:#ffe45c;font-weight:800;min-height:36px}
 .sect{margin:18px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--mute);font-weight:700}
 @media (orientation:landscape) and (min-width:760px){
-  .pbody{flex-direction:row}
+  .pbody,.bwrap{flex-direction:row}
   .panel{width:370px;max-height:none;border-top:0;border-left:1px solid var(--line)}
 }
 </style>
@@ -179,6 +180,7 @@ const RES = [
   { k: 'big',     t: 'Big gain',               g: 'good' },
   { k: 'rush',    t: 'Open – rush got there',  g: 'mid' },
   { k: 'badthrow',t: 'Open – bad throw',       g: 'mid' },
+  { k: 'wrongread',t: 'Open – wrong read',     g: 'mid' },
   { k: 'drop',    t: 'Dropped',                g: 'mid' },
   { k: 'pen',     t: 'Penalty',                g: 'mid' },
   { k: 'covered', t: 'Covered / nobody open',  g: 'bad' },
@@ -319,11 +321,12 @@ function topbar(active) {
 }
 function renderBrowse() {
   UI.view = 'browse'; buildStats();
-  $('#app').innerHTML = `${topbar('browse')}<div class="filters" id="filters"></div><main class="scroll" id="scroll"><div id="grid"></div></main>`;
+  $('#app').innerHTML = `${topbar('browse')}<div class="filters" id="filters"></div><div class="bwrap"><main class="scroll" id="scroll"><div id="grid"></div></main><aside class="panel" id="dock" hidden></aside></div>`;
   const q = $('#q');
   q.addEventListener('input', () => { F.q = q.value; refresh(); });
   q.addEventListener('keydown', (e) => { if (e.key === 'Enter') q.blur(); });
   refresh(); wirePinch($('#scroll'));
+  if (curEntry()) renderPanel();
   $('#scroll').scrollTop = UI.scroll || 0;
 }
 function refresh() {
@@ -430,8 +433,24 @@ function renderPlay() {
   fitBox();
 }
 function curEntry() { return UI.entry ? S.log.find((x) => x.id === UI.entry) : null; }
+function resultForm(ent, dock) {
+  const p = byId(ent.play), has = (k) => ent.res.includes(k);
+  return `<div class="ptop"><h3>${dock ? `#${p.id} ${esc(p.name)} · ` : ''}How did it go?</h3><span class="prow">${dock ? '' : '<button class="btn" data-act="toDock">⊞ Playbook</button>'}<button class="btn pri" data-act="done">Done ✓</button></span></div>
+    <div class="chips">${RES.map((r) => `<button class="rc ${r.g} ${has(r.k) ? 'on' : ''}" data-act="res" data-k="${r.k}">${r.t}</button>`).join('')}</div>
+    <div class="lab">Gain</div><div class="chips">${GAINS.map((g) => `<button class="rc plain ${ent.gain === g ? 'on' : ''}" data-act="gain" data-k="${g}">${g}</button>`).join('')}</div>
+    <div class="lab">Thrown to</div><div class="chips">${TARGETS.map((g) => `<button class="rc plain ${ent.target === g ? 'on' : ''}" data-act="target" data-k="${g}">${g}</button>`).join('')}</div>
+    <div class="lab">Down</div><div class="chips">${[1, 2, 3, 4].map((d) => `<button class="rc plain ${ent.down === d ? 'on' : ''}" data-act="down" data-k="${d}">${d}</button>`).join('')}</div>
+    <div class="lab">Note</div><div class="noteRow"><textarea class="note" id="note" placeholder="Anything worth remembering…">${esc(ent.note || '')}</textarea><button class="mic" id="mic" data-act="mic" aria-label="Dictate">🎤</button></div>
+    <div class="prow" style="margin-top:12px">${dock ? '' : '<button class="btn" data-act="draw">✏️ Draw</button>'}<button class="btn danger" data-act="delEntry">Delete this call</button></div>`;
+}
 function renderPanel() {
-  const p = byId(UI.id), st = STATS[p.id], ent = curEntry();
+  const ent = curEntry(), dock = $('#dock');
+  if (dock) {   // playbook view: the result form docks beside/below the grid
+    dock.hidden = !ent;
+    if (ent) { dock.innerHTML = resultForm(ent, true); $('#note').addEventListener('input', (ev) => { ent.note = ev.target.value; save(); }); }
+    buildStats(); refresh(); return;
+  }
+  const p = byId(UI.id), st = STATS[p.id];
   const panel = $('#panel'); if (!panel) return;
   if (!ent) {
     const last = st.all[st.all.length - 1];
@@ -442,14 +461,7 @@ function renderPanel() {
       ${last && last.note ? `<p class="last">Last time: “${esc(last.note)}”</p>` : ''}`;
     return;
   }
-  const has = (k) => ent.res.includes(k);
-  panel.innerHTML = `<div class="ptop"><h3>How did it go?</h3><button class="btn pri" data-act="done">Done ✓</button></div>
-    <div class="chips">${RES.map((r) => `<button class="rc ${r.g} ${has(r.k) ? 'on' : ''}" data-act="res" data-k="${r.k}">${r.t}</button>`).join('')}</div>
-    <div class="lab">Gain</div><div class="chips">${GAINS.map((g) => `<button class="rc plain ${ent.gain === g ? 'on' : ''}" data-act="gain" data-k="${g}">${g}</button>`).join('')}</div>
-    <div class="lab">Thrown to</div><div class="chips">${TARGETS.map((g) => `<button class="rc plain ${ent.target === g ? 'on' : ''}" data-act="target" data-k="${g}">${g}</button>`).join('')}</div>
-    <div class="lab">Down</div><div class="chips">${[1, 2, 3, 4].map((d) => `<button class="rc plain ${ent.down === d ? 'on' : ''}" data-act="down" data-k="${d}">${d}</button>`).join('')}</div>
-    <div class="lab">Note</div><div class="noteRow"><textarea class="note" id="note" placeholder="Anything worth remembering…">${esc(ent.note || '')}</textarea><button class="mic" id="mic" data-act="mic" aria-label="Dictate">🎤</button></div>
-    <div class="prow" style="margin-top:12px"><button class="btn" data-act="draw">✏️ Draw</button><button class="btn danger" data-act="delEntry">Delete this call</button></div>`;
+  panel.innerHTML = resultForm(ent, false);
   $('#note').addEventListener('input', (ev) => { ent.note = ev.target.value; save(); });
 }
 function fitBox() {
@@ -673,7 +685,7 @@ function mic() {
 
 /* ------------------------------------------------------------------ actions */
 const ACT = {
-  tab: (el) => { UI.view = el.dataset.v; el.dataset.v === 'log' ? renderLog() : renderBrowse(); },
+  tab: (el) => { UI.entry = null; UI.view = el.dataset.v; el.dataset.v === 'log' ? renderLog() : renderBrowse(); },
   cat: (el) => { F.cat = el.dataset.k || null; refresh(); },
   tag: (el) => { const k = el.dataset.k; F.tags.has(k) ? F.tags.delete(k) : F.tags.add(k); refresh(); },
   hot: () => { F.hot = !F.hot; refresh(); },
@@ -687,7 +699,7 @@ const ACT = {
   cols: (el) => setCols(colsN() - +el.dataset.d),
   menu: menuSheet,
   closeSheet,
-  back: () => { UI.temp = []; UI.draw = false; UI.from === 'log' ? renderLog() : renderBrowse(); },
+  back: () => { UI.temp = []; UI.draw = false; if (UI.from === 'log') UI.entry = null; UI.from === 'log' ? renderLog() : renderBrowse(); },
   prev: () => step(-1),
   next: () => step(1),
   call: () => {
@@ -698,7 +710,8 @@ const ACT = {
   gain: (el) => { const e = curEntry(); e.gain = e.gain === el.dataset.k ? null : el.dataset.k; save(); renderPanel(); },
   target: (el) => { const e = curEntry(); e.target = e.target === el.dataset.k ? null : el.dataset.k; save(); renderPanel(); },
   down: (el) => { const e = curEntry(), d = +el.dataset.k; e.down = e.down === d ? null : d; save(); renderPanel(); },
-  done: () => { UI.entry = null; UI.temp = []; UI.draw = false; buildStats(); renderPlay(); toast('Saved'); },
+  done: () => { UI.entry = null; UI.temp = []; UI.draw = false; buildStats(); if (UI.view === 'browse') renderPanel(); else renderPlay(); toast('Saved'); },
+  toDock: () => { UI.temp = []; UI.draw = false; UI.from = 'browse'; renderBrowse(); },
   delEntry: () => { if (!confirm('Delete this call?')) return; S.log = S.log.filter((x) => x.id !== UI.entry); UI.entry = null; save(); buildStats(); renderPanel(); },
   editEntry: (el) => { const e = S.log.find((x) => x.id === el.dataset.id); closeSheet(); openPlay(e.play, e.id); },
   mic,
